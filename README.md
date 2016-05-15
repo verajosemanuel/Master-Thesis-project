@@ -2,19 +2,28 @@
 
 Thesis project for the end of Master course in Data Science attended during 2015-16.
 
-## Main goal:
+## Project goal:
 
-Design and deploy an automatic or semi-supervised platform for document classification (mainly pdf)
+Design and deploy an automatic or semi-supervised platform for document classification (mainly pdf) and text extraction.
 
+## Running / Installing
+
+Running this code requires a Linux machine for bash scripts, and iPython Notebook & Rstudio for the rest of the code files.
+
+For getting the scope of this work and the methods implemented there's no need of executing code. Just read the presentation files:
+
+	1. Memoria.html
+	2. preliminar.html
+	
 ## File list:
 
 1. Memoria.Rmd
 
-	Rmarkdown file for deploying ioslides presentation with embedded code. This file and the generated html result describes the thesis project, found issues and solutions implemented using different tools and languages.
+	Rmarkdown file for deploying ioslides presentation with embedded code. This file and the html result describes the thesis project, issues and solutions implemented using different tools and languages.
 
 2. Memoria.html
 
-	html ioslides presentation returned by the execution of the Rmd file. *THIS MUST BE THE FIRST FILE TO BE OPENED*.
+	html ioslides presentation returned by the execution of the Rmd file. **THIS MUST BE THE FIRST FILE TO BE OPENED**.
 
 3. preliminar.ipynb / preliminar.html
 
@@ -35,5 +44,12 @@ Design and deploy an automatic or semi-supervised platform for document classifi
 	- procesado.csv (data source for iPython notebook)
 	
 
-	The documents used for this project are protected under confidentiality agreements so, they are not included in this repository.
+**The documents used for this project are protected under confidentiality agreements so, they are not included in this repository.**
+
+## author
+
+Jose Manuel Vera.
+Master in Data Science. 
+twitter: @verajosemanuel
+Linkedin profile: https://es.linkedin.com/in/jose-manuel-vera-813759b
 
