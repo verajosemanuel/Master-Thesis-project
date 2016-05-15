@@ -1,4 +1,4 @@
-# Master-Thesis-project
+# Master Thesis Project
 
 Thesis project for the end of Master course in Data Science attended during 2015-16.
 
