@@ -35,7 +35,7 @@ For getting the scope of this work and the methods implemented there's no need o
 
 4. resumen.sh
 
-	bash script to be included for adding some specific text extraction exemplifying how to get data summary from every document (as term matrix) fullfilling specific department needs.
+	bash script to be included for adding some specific text extraction exemplifying how to get data summary from every document (as term matrix) fullfilling specific user needs.
 
 5. some data files
 	
@@ -49,7 +49,10 @@ For getting the scope of this work and the methods implemented there's no need o
 ## author
 
 Jose Manuel Vera.
+
 Master in Data Science. 
+
 twitter: @verajosemanuel
+
 Linkedin profile: https://es.linkedin.com/in/jose-manuel-vera-813759b
 
