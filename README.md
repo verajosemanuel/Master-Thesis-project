@@ -41,7 +41,7 @@ For getting the scope of this work and the methods implemented there's no need o
 	
 	- pdf_metadata.csv (table containing the extracted metadata via extraccion.sh from every pdf document)
 	- files.csv (preliminary file type count)
-	- procesado.csv (data source for iPython notebook)
+	- procesado.xls (data source for iPython notebook)
 	
 
 **The documents used for this project are protected under confidentiality agreements so, they are not included in this repository.**
