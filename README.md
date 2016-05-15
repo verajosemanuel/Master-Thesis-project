@@ -2,7 +2,11 @@
 
 Thesis project for the end of Master course in Data Science attended during 2015-16.
 
-File list:
+# Main goal:
+
+Design and deploy an automatic or semi-supervised platform for document classification (mainly pdf)
+
+# Thesis File list:
 
 1. Memoria.Rmd
 
@@ -10,7 +14,7 @@ File list:
 
 2. Memoria.html
 
-	html ioslides presentation returned by the execution of the Rmd file. THIS MUST BE THE FIRST FILE TO BE OPENED.
+	html ioslides presentation returned by the execution of the Rmd file. *THIS MUST BE THE FIRST FILE TO BE OPENED*.
 
 3. preliminar.ipynb / preliminar.html
 
@@ -22,12 +26,13 @@ File list:
 
 4. resumen.sh
 
-	bash script to be included for adding some specific text extraction exemplifying how to get some data from douments due to any department needs.
+	bash script to be included for adding some specific text extraction exemplifying how to get data summary from every document (as term matrix) fullfilling specific department needs.
 
 5. some data files
-
-	- pdf_metadata.csv
-	- test.csv
+	
+	- pdf_metadata.csv (table containing the extracted metadata via extraccion.sh from every pdf document)
+	- files.csv (preliminary file type count)
+	- procesado.csv ()
 	
 
 	The documents used for this project are protected under confidentiality agreements so, they are not included in this repository.
