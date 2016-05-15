@@ -1,12 +1,12 @@
-## Master-Thesis-project
+# Master-Thesis-project
 
 Thesis project for the end of Master course in Data Science attended during 2015-16.
 
-# Main goal:
+## Main goal:
 
 Design and deploy an automatic or semi-supervised platform for document classification (mainly pdf)
 
-# Thesis File list:
+## File list:
 
 1. Memoria.Rmd
 
@@ -32,7 +32,7 @@ Design and deploy an automatic or semi-supervised platform for document classifi
 	
 	- pdf_metadata.csv (table containing the extracted metadata via extraccion.sh from every pdf document)
 	- files.csv (preliminary file type count)
-	- procesado.csv ()
+	- procesado.csv (data source for iPython notebook)
 	
 
 	The documents used for this project are protected under confidentiality agreements so, they are not included in this repository.
