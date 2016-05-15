@@ -10,7 +10,7 @@ Design and deploy an automatic or semi-supervised platform for document classifi
 
 Running this code requires a Linux machine for bash scripts, and iPython Notebook & Rstudio for the rest of the code files.
 
-For getting the scope of this work and the methods implemented there's no need of executing code. Just read the presentation files:
+For getting the scope of this work and the methods implemented there's no need of executing code. Just download/clone the repository and read the presentation files:
 
 	1. Memoria.html
 	2. preliminar.html
