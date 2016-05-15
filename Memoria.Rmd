@@ -1,0 +1,480 @@
+---
+title: "Master en Data Science I"
+author: "Jose Manuel Vera"
+date: "10 de mayo de 2016"
+output: ioslides_presentation
+---
+<style>
+pre {
+  font-family: 'Source Code Pro', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 28px;
+  padding: 10px 0 10px 60px;
+  letter-spacing: -1px;
+  margin-bottom: 20px;
+  width: 106%;
+  left: -60px;
+  position: relative;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  /*overflow: hidden;*/
+}
+
+slides > slide {
+  font-size: 18px;
+ }
+ h1, h2, h3 {
+  font-weight: 400;
+}
+h2 {
+  font-size: 35px;
+  line-height: 65px;
+  letter-spacing: -2px;
+  color: #515151;
+}
+h3 {
+  font-size: 20px;
+  letter-spacing: -1px;
+  line-height: 2;
+  font-weight: inherit;
+  color: #797979;
+}
+</style>
+
+# CREACIÓN DE UN SISTEMA DE CLASIFICACIÓN DOCUMENTAL
+
+## ADVERTENCIA
+
+Esta memoria solamente reseña los hitos del proceso. Para una comprensión detallada de cada uno de los problemas encontrados y sus soluciones, se adjunta el código con sus correspondientes comentarios. 
+
+- [iPython Notebook con el analisis exploratorio de la carpeta original](PRELIMINAR.ipynb)
+
+- [Bash Script para el proceso ETL y gestion de archivos](extraccion.sh)
+
+- [Archivo de generación de resumen de datos para departamento juridico](resumen_juridico.sh)
+
+- [Código R con el proceso de Machine Learning](clasificacion.R)
+
+## SESSION INFO
+
+```{r eval=FALSE}
+ filewriter <- file("packages.txt")
+ writeLines((.packages()), filewriter)
+ close(fileConn)
+ 
+ [1] "knitr"       "gridExtra"   "ggplot2"     "party"       "strucchange" "sandwich"    "modeltools"  "stats4"     
+ [9] "mvtnorm"     "grid"        "zoo"         "stats"       "graphics"    "grDevices"   "utils"       "datasets"   
+[17] "methods"     "base"   
+```
+
+
+## EL PROBLEMA PLANTEADO
+
+Más de 300 documentos de todo tipo se deben leer, clasificar y etiquetar, de manera diaria, por diversos departamentos. 
+
+Queremos demostrar que existe la posibilidad de acelerar este proceso de clasificación de la documentación y automatizar en la medida de lo posible, al menos para reducir la carga de trabajo. 
+
+Nuestra hipótesis de trabajo es que podemos extraer suficiente información de los documentos ANTES de su lectura o conversión a texto de manera que podamos clasificarlos para ello y posteriormente extraer el contenido y hacer un reconocimiento de temas.
+
+El contenido a procesar se encuentra en diversos formatos de documento: DOC, RTF y PDF. La extracción de contenido de los dos primeros no presenta problemas, no siendo así en el caso del PDF dado que en su gran mayoría están protegidos con contraseñas.
+
+## ANALISIS EXPLORATORIO
+
+En el notebook iPython adjunto se puede ver un analisis exploratorio de más de 32.000 archivos que los usuarios depositan en un directorio tras leerlos y etiquetarlos. 
+
+Simplemente hicimos un volcado del comando `ls` a CSV y con excel operamos para quedarnos con la extension, tamaño, la fecha y la etiqueta que han insertado en el nombre los diferentes departamentos al clasificar. (se adjunta dicho excel procesado en la misma carpeta que esta memoria)
+
+
+[Click AQUÍ para abrir analisis exploratorio](PRELIMINAR.html)
+
+
+Para ceñirnos a la situación más reciente posible obtenemos un CSV con frecuencias por tipo de documento de un día actual con documentos sin procesar.
+```{r eval=FALSE}
+#!/bin/bash
+ls | awk -F . '{print $NF}' | sort | uniq -c | awk '{print $2,$1}' > files.csv
+```
+
+## VISUALIZACION DE FRECUENCIAS
+
+```{r}
+rm(list=ls())
+library(plyr)
+library(knitr)
+
+files <- read.table("files.csv", header = F)  
+files <- rename(files,c("V1"="type","V2"="frequency"))
+files <- files[2:nrow(files),]  # elimina primera fila (el directorio)
+```
+<div align="center">
+```{r}
+kable(files, format="html")
+```
+</div>
+***
+
+Nótese que la capitalización de las extensiones hace que detecte archivos del mismo formato como si fuesen distintas clases de archivo. En el notebook que analiza la carpeta de archivos ya procesados no aparece este hecho. Se tendrá en cuenta para más adelante.
+
+```{r echo=FALSE}
+barplot(files$frequency, names.arg = files$type)
+```
+
+## PLANTEAMIENTO INICIAL DEL FLUJO DE TRABAJO
+
+1. extracción del texto de los archivos tipo DOC y RTF
+
+2. extracción del texto de los documentos PDF
+
+3. extracción y conteo de palabras específicas solicitadas por cada departamento
+
+4. Clasificación de los documentos por temas
+
+
+# EXTRACCIÓN DE TEXTO
+
+## RTF Y DOC
+
+Para extraer el contenido de los DOC y RTF a texto en principio se usó `catdoc` y `unrtf`, pero presentaban problemas si había imágenes embebidas. Opté por usar la linea de comandos de LibreOffice, que además es extremadamente rápido en comparación. 
+
+El proceso es gestionado por un script de bash ([extraccion.sh](extraccion.sh)) que recomiendo abrir con un editor de código. Dicho script se encarga de generar los directorios de trabajo necesarios, clasificar los documentos, abrirlos, extraer la información, obtener imágenes si son PDF con ellas, etcétera.
+
+El mismo script se encarga de que todos los procesos dejen registro en un log, de generar tablas CSV con parámetros y metadatos de documento, de llevar contabilidad para un informe final del proceso y medir los tiempos consumidos por cada fase.
+
+Ejemplo de extracción de texto en archivo WORD
+```{r eval=FALSE}
+#!/bin/bash
+
+libreoffice --invisible --norestore --convert-to txt:"Text" --headless $word_file --outdir ${OUTPUT}"/processed"
+	
+```
+
+## PDF 
+
+Los PDF están constituidos en ocasiones por imágenes. A priori no podemos saber cuál es el caso sin abrirlos manualmente uno a uno, pero vamos a intentar automatizar el proceso.
+
+En caso de ser imágenes, para una correcta extracción del contenido, se hace necesario realizar un reconocimiento optico de caracteres (OCR). Sin emabrgo, el OCR es muy costoso en tiempo y recursos.
+En pruebas iniciales con 400 pdf el proceso OCR tardó 3 días en completarse (1 core, 4 GB Ram).
+
+Necesitamos saber si alguna de las características de los PDF permite discriminar entre ellos. Para comprobarlo, mediante herramientas del sistema operativo (`poppler-utils`) generamos un CSV con metadatos de cada PDF. Entre otros y sin ser exhaustivos:
+
+- numero de imagenes
+
+- numero de fuentes incrustadas
+
+- lineas de texto en primera página
+
+- frecuencia de las tres palabras más comunes en castellano según la RAE (de|la|que).
+
+[link al corpus de la RAE](http://corpus.rae.es/lfrecuencias.html)
+
+## Ejemplo de obtención de metadatos del PDF
+
+En un bucle `for` que recorra todos los ficheros `$pdf_file`:
+```{r eval=FALSE}
+#!/bin/bash
+# limpiamos todos los caracteres extraños con expresiones regulares
+firstpage=""$(pdftotext -f 1 -l 1 -enc UTF-8 "$pdf_file" - | tr -cd \
+              '[[:alnum:]][áéíóúÁÉÍÓÚñÑªºüÜ°;]\40-\040\045\054\011\012\014\015\057\050\051\100\128\176\056' \
+              | sed '/^$/d' | sed 's/[^[:print:]]/ /g')
+
+firstpagelines=""$(echo "$firstpage" | wc -l)    # lineas de primera pagina
+
+fwords=""$(echo "$firstpage" | grep -E de\|la\|que | wc -l) # 3 mas frecuentes español
+
+fonts=""$(pdffonts "$pdf_file" | wc -l)           # numero de fuentes incrustadas
+
+imagesp=""$(pdfimages -list "${pdf_file}" | wc -l)  # numero de imagenes incrustadas
+
+```
+
+## PRIMERAS HIPÓTESIS
+
+Nuestras primeras hipótesis de trabajo analizando los metadatos son:
+
+- documentos sin fuentes incrustadas indican que están compuestos de imágenes escaneadas (dimensión `fonts`)
+
+- documentos con muchas imágenes incrustadas indican igualmente la ausencia de texto parseable (dimensión `imagesp`)
+
+- documentos que en primera página no cuentan con ninguna de las palabras más frecuentes en castellano son igualmente constituidos de imágenes (dimensión `fwords`)
+
+- lo mismo reza para aquellos con escasas líneas en la primera página (dimensión `fistpagelines`)
+
+Para tener un volumen suficiente de documentos para esta clasificación preliminar hemos solicitado a las personas que los leen a diario, que al cerrarlos los renombren poniendo si son texto o imagen. Ante la duda o mezcla de ambos contenidos se etiquetan por defecto como imagen para forzar el OCR, evitando así la pérdida de información de etiquetarse como texto un documento que no lo es.
+
+Con su ayuda al cabo de un tiempo tenemos más de 400 documentos etiquetados para comenzar a probar.
+
+
+## CLASIFICACIÓN PRELIMINAR: texto/imagen
+
+Con el CSV de los metadatos realizamos un primer análisis exploratorio a ver que nos encontramos. Primero veamos las correlaciones:
+```{r }
+pdf.metadata <- read.csv("pdf_metadata.csv", sep=";", strip.white=TRUE)
+
+# descartamos el nombre del archivo. Para clasificación NO es util
+tmp <- pdf.metadata[, !(colnames(pdf.metadata) %in% ("FILE"))]
+ 
+```
+
+```{r eval= FALSE}
+# En la correlación logistica vemos que solamente hay 5 variables significativas
+# LA SALIDA DE ESTE COMANDO SE OMITE POR BREVEDAD
+
+fit = glm(TIPO ~ . , data = tmp, family=binomial)
+summary(fit)
+```
+
+## CORRELACIÓN 
+
+```{r }
+fit = glm(TIPO ~ IMAGES + ROTATION + PAGELINESSECOND + FWORDS1 + TWORDS1, data = tmp, family=binomial)
+# summary(fit) # solo nos quedamos con las variables que son significativas
+tmp <- tmp[,c("TIPO","IMAGES","ROTATION","PAGELINESSECOND","FWORDS1","TWORDS1","FONTS")]
+```
+ Coefficients  |  Estimate |Std. Error| z value |Pr(>z)| signif. |
+ ------------- | --------- | -------- | ------- | ---- | ----|
+(Intercept)    |  2.6857962| 0.2633980|10.197  |< 2e-16| *** |
+IMAGES         |  0.0008252| 0.0003182| 2.593  | 0.0095| ** |
+ROTATION       |  0.0142835| 0.0082926| 1.722  | 0.0850| .  |
+PAGELINESSECOND| -0.0822938| 0.0116167|-7.084 |1.40e-12| *** |
+FWORDS1        | -0.2120895| 0.0493709|-4.296 |1.74e-05| *** |
+TWORDS1        | -0.0059823| 0.0030149|-1.984  | 0.0472| *  |
+
+## VISUALIZACIÓN DENSIDAD DIMENSIONES ~ OBJETIVO
+
+```{r, warning=FALSE}
+library(ggplot2) ; library(gridExtra)
+g.images <- ggplot(tmp, aes(IMAGES, fill = TIPO, colour = TIPO)) +
+              geom_density(alpha = 0.6) + ggtitle("Número de Imágenes") +
+              theme(axis.title.x=element_blank()) + xlim(0.20,250)
+
+g.rotation <- ggplot(tmp, aes(ROTATION, fill = TIPO, colour = TIPO)) +
+              geom_bar(alpha = 0.6) + ggtitle("Rotación de página") +
+              theme(axis.title.x=element_blank())
+
+g.pagl2 <- ggplot(tmp, aes(PAGELINESSECOND, fill = TIPO, colour = TIPO)) +
+              geom_density(alpha = 0.6) + ggtitle("Líneas de texto en 2ª pág.") +
+              theme(axis.title.x=element_blank()) + xlim(1,100)
+
+ocr <- subset(tmp, TIPO=="ocr") ; txt <- subset(tmp, TIPO=="txt")
+g.fwords1 <- ggplot(tmp, aes(FWORDS1, fill = TIPO, colour = TIPO), main = "RAE") +
+                geom_density(alpha = 0.6) + theme(axis.title.x=element_blank()) +
+                ggtitle("Frecuencias Corpus RAE")
+```
+
+***
+
+```{r, warning= FALSE}
+library(gridExtra)
+grid.arrange(g.images, g.rotation, g.pagl2, g.fwords1,  ncol=2, nrow =2)
+
+```
+
+
+## PALABRAS, FUENTES y ALGUNA MÁS
+
+```{r, warning= FALSE}
+tmp2 <- pdf.metadata[,c("TIPO","TWORDS1","FONTS","PAGELINESFIRST","PAGELINESLAST")]
+tmp2 <- tmp2[complete.cases(tmp2),] 
+g.words1 <- ggplot(tmp2, aes(TWORDS1, fill = TIPO, colour = TIPO)) +
+              geom_density(alpha = 0.6) +  ggtitle("Palabras en 1ª pág.") +
+              theme(axis.title.x=element_blank()) + xlim(1,100)
+
+g.fonts <- ggplot(tmp2, aes(FONTS, fill = TIPO, colour = TIPO)) +
+              geom_density(alpha = 0.6) +  ggtitle("Fuentes incrustadas") +
+              theme(axis.title.x=element_blank()) +  xlim(1,100)
+
+g.pgl1 <- ggplot(tmp2, aes(PAGELINESFIRST, fill = TIPO, colour = TIPO)) +
+              geom_density(alpha = 0.6) +  ggtitle("Líneas en 1ª pág.") +
+              theme(axis.title.x=element_blank()) + xlim(1,100)
+
+g.pglast <- ggplot(tmp2, aes(PAGELINESLAST, fill = TIPO, colour = TIPO)) +
+              geom_density(alpha = 0.6) +  ggtitle("Líneas en última pág.") +
+              theme(axis.title.x=element_blank()) +  xlim(1,100)
+```
+
+*** 
+
+```{r, warning= FALSE}
+grid.arrange(g.words1, g.fonts, g.pgl1, g.pglast, ncol=2, nrow =2)
+
+```
+
+Salvo en el caso de IMAGES, ROTATION, FONTS y TWORDS1, hay mayor densidad para los PDF que precisan OCR en torno al valor 0 de cada dimension.  
+
+## ÁRBOL DE CLASIFICACIÓN
+
+```{r, warning= FALSE, message= FALSE}
+library(party)
+tmp3 <- pdf.metadata[, !(colnames(pdf.metadata) %in% ("FILE"))]
+#tmp3 <- tmp3[complete.cases(tmp3),] 
+arbol.ct <- ctree(TIPO ~ IMAGES+ROTATION+PAGELINESSECOND+FWORDS1+TWORDS1+FONTS+PAGES+SIZE, data = tmp3)
+reales.ct <- tmp3$TIPO
+predichos.ct<- predict(arbol.ct)
+confusion <- table(reales.ct, predichos.ct)
+```
+<div align="center">
+```{r}
+kable(confusion, format="html")
+```
+</div>
+
+***
+La idea es hacer un punto de corte en función de los metadatos que englobe al máximo posible de OCR minimizando el tiempo de proceso y los errores de tipo I (clasificar como texto un pdf de imágenes)
+
+```{r}
+plot(arbol.ct, tp_args = list(beside = TRUE))
+```
+
+Vemos que en términos generales se confirman nuestras sospechas. Los documentos candidatos para OCR tienen pocas fuentes incrustadas, pocas palabras, muchas imágenes y definitoriamente no poseen ninguna de los 3 vocablos más frecuentes del Español en su primera página.
+
+Sin embargo hemos de tener en cuenta que algunos de ellos son calificados como texto (ver matriz de confusión)
+
+## PUNTO DE CORTE
+
+Definimos en el bash script `extraccion.sh` (líneas 310 a 364) la clasificación preliminar de los documentos con una mezcla de sentido común y de los indicios del análisis previo de la siguiente forma:
+
+- Más de 20 páginas obligatoria lectura (requisito de negocio)
+- Fuentes incrustadas menor o igual a 1 -> OCR
+- Menos de 3 en el conteo de 3 palabras más frecuentes en Español según RAE -> OCR
+- Más imágenes que páginas -> OCR
+- Más de 20 lineas de texto en primera página -> TEXTO
+
+Como aún así es posible que algún PDF quede sin procesar, en las líneas 22-46 del script `resumen_juridico.sh` (ver más adelante funcionalidad de este sengundo script) se comprueba que todos los textos extraidos tengan contenido. 
+
+Si no es así se guarda el nombre del archivo en un log y se mueve a la carpeta `non processed` para revisión posterior al finalizar la ejecución del proceso. Puede ser interesante investigar qué tipo de archivos escapan a la conversión.
+
+***
+
+Una vez clasificados los PDF como "ocr" o como "txt" procedemos a extraer el contenido mediante pdftotext en el primer caso, y usando una combinación de convert (extrae las imágenes) & tesseract (realiza el OCR) en el segundo. En pruebas iniciales este proceso se revela extremadamente lento. Por ello con GNU Parallel lanzamos un hilo por cada nucleo del procesador (parámetro obligatorio THREADS).
+
+Ejemplo de extracción de contenido en pdf compuesto por texto
+```{r eval=FALSE}
+#!/bin/bash
+
+pdftotext -enc UTF-8  "$pdf_file" ${OUTPUT}/processed/${FILENAMEsinPDF}.txt
+```
+
+Ejemplo de extracción multihilo en pdf compuesto por imágenes escaneadas (GNU Parallel)
+```{r eval=FALSE}
+#!/bin/bash
+
+# convert (extrae imagenes del PDF)
+find . -name '*.pdf' | parallel -j ${THREADS} --progress convert -density 600 -trim {} \
+-quality 100 -set filename:f '%t'  '../tmp/$(basename '{}' .pdf)'__%03d.jpg
+
+# tesseract (ocr a los jpg extraidos)
+find . -name '*.jpg' | parallel -j ${THREADS} --progress tesseract {} -l spa '$(basename '{}' .jpg)'
+
+```
+
+***
+
+Obtenemos como resultado del anterior proceso una imagen por cada página y a su vez un fichero de texto plano con el contenido interpretado mediante OCR por cada imagen. Ahora debemos por tanto concatenar cada uno de los ficheros de texto en el mismo orden en que se lee en el PDF original.
+
+Concatenado de los ficheros de texto con nombre del PDF original
+```{r eval=FALSE}
+#!/bin/bash
+
+for tt in "../tmp/"$(echo $nombrebase | sed -e 's/]/?/g')   # para cada fichero de texto
+do
+  FINALTXTNAME=$(echo ${nombrebase} | sed -e 's/\*//g')  # capturamos nombre de PDF "padre"
+    
+	cat $tt | sed 's/\o14//g' | tr -cd '\11\12\15\40-\176' | sed '1 s/\xEF\xBB\xBF//'  \
+	| sed '/^$/d' | sed 's/[^[:print:]]/ /g' | sed 's/-//g' | sed 's/_\._//g'       \
+	| sed 's/"//g' | sed 's/_\.//g' | sed 's/"//g' | sed "s/'//g"             \
+	>> ${OUTPUT}"/processed/"${FINALTXTNAME}
+		
+                rm -f $tt  # borramos todos los textos "hijo"
+done
+
+```
+
+## PÉRDIDA DE INFORMACIÓN
+
+Es esperable cierto grado de pérdida de información en el proceso OCR. Máxime cuando los archivos de origen son malas copias de un original, tienen tachaduras o escrituras a mano, imagenes torcidas, etcétera.
+
+Para poder tener alguna idea de aquellos PDF  que no han tenido una extracción de contenido muy limpia y que obligan por tanto a lectura supervisada, extraemos un valor numérico de la pérdida sufrida pasando el texto resultante por un diccionario (`aspell`) y computando el numero de palabras que no se hallan en él.
+
+Es una estimación muy burda, pues cosas como los nombres propios no se encontrarán, pero sirve para nuestro propósito al informar del ratio de pérdida de manera consistente para todos los documentos.
+<div align="center">
+$perdida=\frac{total NO encontradas en diccionario}{total palabras en documento}$
+</div>
+```{r eval=FALSE}
+#!/bin/bash
+for t in *.txt
+do
+  en_documento=$(cat "$t" | wc -w)     # contamos el total de palabras
+	no_en_dicc=$(cat "$t" | aspell list | sort -u -f | wc -l) # aspell
+	perdida=$(echo "scale=2;$no_en_dicc / $en_documento" |bc -l) # calculo del ratio
+	echo "$t tiene una pérdida de $perdida"  
+done
+```
+
+## DOCUMENTOS VACÍOS: MECANISMO DE SEGURIDAD
+
+Por requisitos de negocio, no puede quedar ningún documento sin procesado correcto, cosa que puede suceder por muy diversas causas, desde problemas con la clasificación previa hasta errores que hacen que los documentos queden vacíos. Deben ser identificados para lectura o re-clasificación. Para ello, comprobamos a su vez que TODOS los ficheros de texto procesados tengan datos, y si no es así, se guarda su nombre en un log (`error.log`) y se mueven a la carpeta `non processed`.
+
+```{r eval=FALSE}
+#!/bin/bash
+if [ "$en_documento" == 0 ];then
+nombrepdf=$(basename $f .txt)".pdf"
+nombresinext=$(basename $f .txt)
+mv $f ../non_processed/
+		if [ -f ${OUTPUT}"/pdf_ocr/"${nombrepdf} ]; then  # si estaba clasificado como OCR
+		mv "$OUTPUT/pdf_ocr/"${nombrepdf}  ../non_processed/
+		fi
+		if [ -f ${OUTPUT}"/pdf_txt/"${nombrepdf} ]; then  # si estaba clasificado como TXT
+		mv "$OUTPUT/pdf_txt/"${nombrepdf}  ../non_processed/
+		fi
+			echo $f >> ${OUTPUT}"/error.log"
+fi
+```
+
+# CLASIFICACION POR CONTENIDOS
+
+## 
+
+Tras el proceso extracción de datos pasamos al proceso de reconocimiento de contenidos.
+
+El primer problema encontrado es que aquellos pdf que pasaron OCR y que tienen mala calidad en las imágenes generan un archivo de texto con muchas palabras que no corresponde con palabras reales.
+
+Algunas de esas palabras son comprensibles aunque serían rechazadas por un diccionario (cami6n = camión). Por desgracia, ni `aspell` ni otros sistemas que hemos probado ofrecen una corrección automática y hacer un `replace` masivo dentro de los textos implica escribir una cantidad ingente de sustituciones del estilo  `sed -e 's/palabraOriginal/palabraFinal/gI'` para lo que no tenemos tiempo. 
+
+De modo que para mejorar los datos que alimentarán al sistema de clasificación pasamos el resultado por `aspell` pero esta vez para generar un listado completo de palabras no canónicas, que posteriormente se usarán como `cleaning stopwords` expurgando a mano aquellas que pese a no ser correctas son comprensibles. 
+
+```{r eval=FALSE}
+#!/bin/bash
+# volcamos todas las palabras que no están en el diccionario a un archivo
+ for file in *.txt; do `cat "$file" | tr '\n\r' ' ' | aspell list | sort -u -f >> base_stopwords.txt `; done
+
+# Ordenamos por frecuencias únicas descendentes y revisamos
+ cat base_stopwords.txt | sort | uniq -c | sort -nr > cleaning_stopwords.txt
+
+```
+
+## RESULTADO STOPWORDS
+
+```{r eval=FALSE}
+
+#!/bin/bash
+ cat stopwords.txt
+    1249 ña
+    1198 ENJ
+    1188 Ia
+    1165 ﬁ
+    1156 Not
+    1156 Hash
+    1144 Pérez
+    1120 Álvaro
+    1112 OF
+    1106 pdf
+     992 II
+     989 Io
+     987 ei
+     981 ll
+     880 INST
+     
+
+
+```
+
