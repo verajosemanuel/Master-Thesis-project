@@ -18,27 +18,31 @@ For getting the scope of this work and the methods implemented there's no need o
 	
 ## File list:
 
-1. Memoria.Rmd  (code folder)
+1. memoria2.Rmd  (code folder)
 
-	Rmarkdown file for deploying ioslides/pdf presentation with embedded code. This file and the html/pdf result describes the thesis project, issues and solutions implemented using different tools and languages.
+	Rmarkdown file for deploying pdf presentation with embedded code. This file and the pdf result describes the thesis project, issues and solutions implemented using different tools and languages.
+	
+2. memoria.Rmd  (code folder)
 
-2. memoria2.pdf  (reports folder)
+	Rmarkdown file for deploying ioslides presentation with embedded code (same as the previous file). This one and the ioslide result describes the thesis project, issues and solutions implemented using different tools and languages.
+
+3. memoria2.pdf  (reports folder)
 
 	pdf document returned by the execution of the Rmd file. **THIS MUST BE THE FIRST FILE TO BE OPENED**. Optionally you would prefer to read the ioslides (memoria.html)
 
-3. preliminar.ipynb / preliminar.html  (code / reports folders)
+4. preliminar.ipynb / preliminar.html  (code / reports folders)
 
 	iPython Notebook describing preliminary data analysis procedure and results. 
 	
-4. extraccion.sh (code folder)
+5. extraccion.sh (code folder)
 	
 	Linux Bash script regarding the core functionality (file managing and parsing).
 
-4. resumen_juridico.sh  (code folder)
+6. resumen_juridico.sh  / clasificador.sh /  cleaner.sh /  (code folder)
 
-	bash script to be included for adding some specific text extraction exemplifying how to get data summary from every document (as term matrix) fullfilling specific user needs.
+	bash script to be included for adding some specific text extraction & functionality exemplifying how to get data summary from every document (as term matrix)  & fullfilling specific user needs. Read memoria2.pdf for details.
 
-5. some data files   (data folder)
+7. some data files   (data folder)
 	
 	- pdf_metadata.csv (table containing the extracted metadata via extraccion.sh from every pdf document)
 	- files.csv (preliminary file type count)
@@ -46,9 +50,10 @@ For getting the scope of this work and the methods implemented there's no need o
 	- accuracy.csv  (text extraction accuracy)
 	- df_dtm.csv  (term document matrix)
 	- summary.log (text processing log example)
+	- .....
 	
 
-**The documents used for this project are protected under confidentiality agreements so, they are not included in this repository.**
+**The source documents used for this project are protected under confidentiality agreements so, they are not included in this repository.**
 
 ## author
 
