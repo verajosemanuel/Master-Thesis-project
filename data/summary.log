@@ -1,0 +1,40 @@
+-----------------------------CONTADORES-----------------------------
+1518 pdfs texto.
+1271 pdfs imagen.
+4951 imagenes extraidas para OCR.
+2789 procesados.
+0 Word Doc. procesados.
+3 rtf procesados.
+0 Word DocX. procesados.
+0 rechazados.
+2792 Total documentos.
+--------------------------- tabla de tiempos ---------------------------
+Inicio: vie may 20 14:04:38 CEST 2016
+Fin: sáb may 21 00:02:25 CEST 2016
+-------
+Inicio no PDF: vie may 20 14:04:38 CEST 2016
+Fin no PDF: vie may 20 14:04:38 CEST 2016
+Tiempo de no PDF 0 segundos.
+-------
+Inicio PDF: vie may 20 14:04:38 CEST 2016
+Fin PDF: vie may 20 14:14:41 CEST 2016
+Tiempo de pdf 10.05 m.
+-------
+Inicio IMG y OCR: vie may 20 18:37:44 CEST 2016
+Fin IMG y OCR: vie may 20 23:27:07 CEST 2016
+IMG y OCR total 289.38 m.
+-------
+Inicio Concatenado: vie may 20 23:27:07 CEST 2016
+Fin Concatenado: vie may 20 23:29:10 CEST 2016
+Total concatenado: 2.05 m.
+-------
+Inicio conversion y extracción: vie may 20 14:04:38 CEST 2016
+Fin conversion y extracción: vie may 20 23:29:10 CEST 2016
+Total conversion y extracción 564.53 m.
+-------
+Inicio summary: vie may 20 23:29:10 CEST 2016
+Fin summary: sáb may 21 00:02:25 CEST 2016
+Summary 1995 segundos.
+-----------------------------------------------------------------------------------
+Total ejecución de programa 597.78 m.
+===================================== FIN =====================================
