@@ -1575,7 +1575,39 @@ OTROS
 
 </article></slide><slide class=''><hgroup><h2>CLASIFICACIÓN A CSV</h2></hgroup><article  id="clasificacion-a-csv">
 
-<p>A partir de las indicaciones de este último árbol se implementa un script (<em>../code/clasificador.sh</em>) que vuelca a CSV (<em>../data/predicitivo_temas.csv</em>) la clasificación obtenida.</p>
+<p>A partir de las indicaciones de este último árbol se implementa un script (<em>../code/clasificador.sh</em>) que vuelca a CSV (<em>../data/predicitivo_temas.csv</em>) la clasificación obtenida. Este CSV se ha entregado a los correspondientes departamentos para que cotejen su fiabilidad.</p>
+
+<pre class = 'prettyprint lang-r'>#!/bin/bash
+    contiene_mejora=&quot;&quot;$(echo &quot;$CONTENIDOF&quot; | grep -E -i -o -c &#39;\bmejora\b&#39;)
+    contiene_general=&quot;&quot;$(echo &quot;$CONTENIDOF&quot; | grep -E -i -o -c &#39;\bgeneral\b&#39;)
+    contiene_embargo=&quot;&quot;$(echo &quot;$CONTENIDOF&quot; | grep -E -i -o -c &#39;\bembargo\b&#39;)
+    contiene_consulta=&quot;&quot;$(echo &quot;$CONTENIDOF&quot; | grep -E -i -o -c &#39;\bconsulta\b&#39;)
+    tema_detectado=&quot;desconocido&quot;
+    
+# clasificación por contenido extraída a partir de arbol de inferencia con R
+if [ $contiene_mejora -gt 0 ]; then  
+        tema_detectado=&quot;NOTIFICACIONES&quot;
+    else
+        if [ $contiene_general -gt 2 ]; then  
+          tema_detectado=&quot;ORDENAMIENTO&quot;
+        else
+            if [ $contiene_embargo -gt 2 ]; then   
+                        tema_detectado=&quot;OTROS&quot;
+                else
+                    if [ $contiene_consulta -gt 0 ]; then
+                                tema_detectado=&quot;ORDENAMIENTO&quot;
+                            else
+                                if [ $contiene_embargo -gt 0 ]; then
+                                    tema_detectado=&quot;APROBACION-NOTIFICACIONES-OTROS&quot;
+                                else
+                                tema_detectado=&quot;APROBACION&quot;
+                            fi
+                            fi
+                        fi
+                    fi 
+            fi</pre>
+
+</article></slide><slide class=''><hgroup><h2></h2></hgroup><article  id="section">
 
 <pre class = 'prettyprint lang-r'># carga del CSV con los contenidos del csv predictivo_temas (disponible en carpeta data)
 predictivo.temas &lt;- read.csv(&quot;../data/predictivo_temas.csv&quot;, sep=&quot;^&quot;, stringsAsFactors=FALSE)
@@ -1642,9 +1674,42 @@ kable(head(predictivo.temas))</pre>
 </tr>
 </table>
 
-<p>En estos momentos se están realizando los primeros ensayos y queda por recibir el feedback de los diferentes departamentos, que esperamos, sea tan positivo como el de la primera clasificación y extracción de contenidos.</p>
+</article></slide><slide class=''><hgroup><h2>MIENTRAS TANTO&#8230;</h2></hgroup><article  id="mientras-tanto...">
 
-<p>En futuras revisiones del proyecto tras recibir el feedback se incorporarán al proyecto todas las sugerencias que sean susceptibles de implementación.</p>
+<p>Mientras los departamentos correspondientes van evaluando la idoneidad de este modelo sencillo, se prosigue en la búsqueda del modelo predictivo más ajustado. Entre otras cosas, se ha mejorado la lectura de datos y la generación de modelos con las siguientes inclusiones:</p>
+
+<ol>
+<li>Diferentes modos de generar las rutas según si la máquina es Linux o Windows</li>
+<li>Comprobación previa de la existencia del objeto antes de generarlo</li>
+</ol>
+
+<p>Para ello vamos a probar con diferentes modelos (En el archivo <strong>modelos.R</strong>)</p>
+
+<ul>
+<li>Ctree</li>
+<li>Evolutionary tree</li>
+<li>Knn</li>
+<li>Jacknife</li>
+<li>Random forest</li>
+<li>Naive-Bayes</li>
+<li>Support Vector Machine</li>
+<li>Gradient Boosting Machine</li>
+</ul>
+
+</article></slide><slide class=''><hgroup><h2>EFICACIA DE LOS MODELOS PREDICTIVOS</h2></hgroup><article  id="eficacia-de-los-modelos-predictivos">
+
+<p>Queda claro que el orden de &quot;acuracy&quot; de los modelos, de mejor a peor es:</p>
+
+<ol>
+<li>knn (0.989)</li>
+<li>gbm (0.955)</li>
+<li>svm (0.900)</li>
+<li>RandomForest (0.884)</li>
+<li>Jacknife (0.816)</li>
+<li>Evolutionary Tree (0.801)</li>
+<li>Conditional Inference Tree (0.718)</li>
+<li>Naive-Bayes (0.647)</li>
+</ol>
 
 </article></slide><slide class='segue dark nobackground level1'><hgroup class = 'auto-fadein'><h2>CONCLUSIONES</h2></hgroup><article  id="conclusiones">
 
@@ -1656,9 +1721,9 @@ kable(head(predictivo.temas))</pre>
 
 <p>El número total de documentos procesados superó este mes los 26.000 dado que se ha solicitado incluso que se aplique esta metodología a antiguos proyectos</p>
 
-<p>Los procesos de clasificación, por las noticias que tenemos, se han acelerado igualmente, aunque queda por evaluar la precisión del sistema predictivo y articular mecanismos de verificación en caso de ser necesario a partir de las indicaciones de cada uno de los departamentos.</p>
+<p>Los procesos de clasificación, por las noticias que tenemos, se han acelerado igualmente, aunque queda por evaluar la precisión del sistema predictivo, sustituir el árbol de decisión inicial por el modelo basado en knn y articular mecanismos de verificación en caso de ser necesario a partir de las indicaciones de cada uno de los departamentos.</p>
 
-<pre >                                        Jose Manuel Vera Oteo, en Madrid, a 2 de Junio de 2016</pre></article></slide>
+<pre >                                        Jose Manuel Vera Oteo, en Madrid, a 9 de Junio de 2016</pre></article></slide>
 
 
   <slide class="backdrop"></slide>
