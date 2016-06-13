@@ -400,6 +400,7 @@ Una vez clasificados los PDF como "txt" o como "ocr" se pasa a extraer el conten
 En pruebas iniciales este proceso se revela extremadamente lento. Por ello con GNU Parallel lanzamos un hilo por cada nucleo del procesador (parámetro obligatorio **THREADS**).
 
 Ejemplo de extracción de contenido en pdf compuesto por texto
+
 ```{r eval=FALSE}
 #!/bin/bash
 
@@ -1175,10 +1176,6 @@ Los procesos de clasificación, por las noticias que tenemos, se han acelerado i
 
 
 										Jose Manuel Vera Oteo, en Madrid, a 12 de Junio de 2016
-
-
-
-                                                Jose Manuel Vera Oteo, en Madrid, a 2 de Junio de 2016
 
 
 
