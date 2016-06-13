@@ -12,13 +12,13 @@ Running this code requires a Linux machine for bash scripts, and iPython Noteboo
 
 For getting the scope of this work and the methods implemented there's no need of executing code. Just download/clone the repository and read the presentation files:
 
-	1. memoria2.pdf
+	1. memoria2.pdf (read this first)
 	2. preliminar.html
 	3. memoria.html (ioslides version of memoria2.pdf)
 	
 ## File list:
 
-1. memoria2.Rmd  (code folder)
+1. memoria2.Rmd  (code folder). Main document.
 
 	Rmarkdown file for deploying pdf presentation with embedded code. This file and the pdf result describes the thesis project, issues and solutions implemented using different tools and languages.
 	
