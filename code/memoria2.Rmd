@@ -935,6 +935,7 @@ save(res, file = "modeldata.rda")
 
 En todos los casos el procedimiento es el mismo:
 Si no se encuentra el fichero con las predicciones, se genera. Si existe, se carga en memoria.
+El código se encuentra en el archivo code/modelos.R
 
 ### Ctree
 
