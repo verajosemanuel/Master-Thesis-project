@@ -400,7 +400,6 @@ Una vez clasificados los PDF como "txt" o como "ocr" se pasa a extraer el conten
 En pruebas iniciales este proceso se revela extremadamente lento. Por ello con GNU Parallel lanzamos un hilo por cada nucleo del procesador (parámetro obligatorio **THREADS**).
 
 Ejemplo de extracción de contenido en pdf compuesto por texto
-
 ```{r eval=FALSE}
 #!/bin/bash
 
@@ -621,7 +620,6 @@ dtm <- removeSparseTerms(dtm, 0.9)
 
 # Vamos a preservar el contenido de la matriz en disco para uso posterior
 matriz <- as.matrix(dtm)
-dim(matriz)
 # pasamos a Data Frame
 df <- as.data.frame(matriz)
 # dar nombre a la columna rownames (index)
@@ -822,7 +820,7 @@ Este CSV se ha entregado a los correspondientes departamentos para que cotejen s
 
 
 ```{r}
-
+library(knitr)
 # carga del CSV con los contenidos del csv predictivo_temas (disponible en carpeta data)
 predictivo.temas <- read.csv("../data/predictivo_temas.csv", sep="^",
                                                 stringsAsFactors=FALSE)
@@ -831,23 +829,29 @@ predictivo.temas <- read.csv("../data/predictivo_temas.csv", sep="^",
 kable(head(predictivo.temas))
 
 ```
+
+******
+
 Mientras los departamentos correspondientes van evaluando la idoneidad de este modelo sencillo, se prosigue en la búsqueda del modelo predictivo más ajustado. 
 Entre otras cosas, se ha mejorado la lectura de datos y la generación de modelos con las siguientes inclusiones:
-	1. Diferentes modos de generar las rutas según si la máquina es Linux o Windows 
-	2. Comprobación previa de la existencia del objeto antes de generarlo
-	
+
+1. Diferentes modos de generar las rutas según si la máquina es Linux o Windows
+2. Comprobación previa de la existencia del objeto antes de generarlo
+
 Para ello vamos a probar con diferentes procedimientos.
-El siguiente código realiza la predicción mediante los siguientes modelos. 
+
+El siguiente código realiza la predicción mediante los siguientes modelos.
+
 ATENCION : datos no incluidos por confidencialidad.
 
-• Ctree
-• Evolutionary tree
-• Knn
-• Jacknife
-• Random forest
-• Naive-Bayes
-• Support Vector Machine
-• Gradient Boosting Machine
+- Ctree
+- Evolutionary tree
+- Knn
+- Jacknife
+- Random forest
+- Naive-Bayes 
+- Support Vector Machine
+- Gradient Boosting Machine
 
 ```{r eval=FALSE}
 
@@ -859,230 +863,269 @@ if (!require("pacman")) install.packages("pacman")
 pacman::p_load(profvis, tm, party, stringi, evtree, caret, e1071, randomForest, class, gbm)
 
 # obtenemos el directorio dado que hay diferencias entre los entornos windows y linux
+  
 so <- .Platform$OS.type
 
 if (so == "windows"){
-
-directorio <- file.path("~","CODIGO","R","documentos")
-datafolder <- file.path("~","CODIGO","datos","documentos")
-
+  
+  directorio <- file.path("~","CODIGO","R","documentos")
+  datafolder <- file.path("~","CODIGO","datos","documentos")
+  
 } else {
-
-directorio <- file.path("~","scripts","R","documentos") 
-datafolder <- file.path("~","scripts","datos","documentos")
-} 
+  
+  directorio <- file.path("~","scripts","R","documentos")
+  datafolder <- file.path("~","scripts","datos","documentos")
+  
+}
 
 setwd(directorio)
 
-# cargamos los datos del modelo guardados.
+
+# cargamos los datos del modelo guardados. 
 # Si no han sido guardados se generan de nuevo
 
-archivo.datos <- file.path(directorio, "modeldata.rda") 
-
+archivo.datos <- file.path(directorio, "modeldata.rda")
+  
 if(file.exists(archivo.datos)) {
 
-load(archivo.datos) 
-
+  load(archivo.datos)
+  
 } else {
-
+ 
    # fuente de los textos
-txt.files <- DirSource(directory = datafolder, encoding ="UTF-8" ) 
-docs <- VCorpus(x=txt.files)
-
+  txt.files <- DirSource(directory = datafolder, encoding ="UTF-8" )
+  docs <- VCorpus(x=txt.files)
+  
  # transformaciones aplicadas al corpus
-docs <- tm_map(docs, content_transformer(removePunctuation)) 
+docs <- tm_map(docs, content_transformer(removePunctuation))
 docs <- tm_map(docs, content_transformer(tolower))
+
 docs <- tm_map(docs, removeWords,c("maria","garcia","jose",
-				"julio","manuel","juan",
-				"martinez","alvaro","perez")) 
+                                   "julio","manuel","juan",
+                                   "martinez","alvaro","perez"))
+
 docs <- tm_map(docs, removeWords, stopwords("spanish"))
 docs <- tm_map(docs, content_transformer(removeNumbers))
 
-# el proceso elimina la barra que separa géneros en la palabra abogado: se corrige
-docs<-tm_map(docs,content_transformer(function(x)stri_replace_all_fixed(x,"abogadoa", "abogado",vectorize_all=FALSE)))
+# el proceso elimina la barra que separa géneros en la palabra abogado: se hace corrige
+docs<-tm_map(docs,content_transformer(function(x)stri_replace_all_fixed(x,"abogadoa",
+                                                        "abogado",vectorize_all=FALSE)))
 docs <- tm_map(docs, content_transformer(stripWhitespace))
 
 # creación de la matriz DTM
-dtm <- DocumentTermMatrix(docs) dtm <- removeSparseTerms(dtm, 0.9)
+dtm <- DocumentTermMatrix(docs)  
+dtm <- removeSparseTerms(dtm, 0.9)
 
 # serializar
-m <- as.matrix(dtm) 
+m <- as.matrix(dtm)   
 df <- as.data.frame(m)
-
+  
 # filename como columna
-df <- cbind(FILENAMES = rownames(df), df) 
+df <- cbind(FILENAMES = rownames(df), df)
 rownames(df) <- NULL
-
+  
 # obtencion de la etiqueta entre el guion bajo y la extension
-inicio <- regexpr('[_]',dtm.df$FILENAMES)+1 
+inicio <- regexpr('[_]',dtm.df$FILENAMES)+1
 fin <- regexpr('[.]',dtm.df$FILENAMES)-1
 
 dtm.df$LABEL <- substring(dtm.df$FILENAMES, inicio , fin)
-
+  
 # subsetting de todo menos el nombre de fichero
 res <- df[,-1]
-res <- res[,c(ncol(res),1:(ncol(res)-1))] 
+res <- res[,c(ncol(res),1:(ncol(res)-1))]
 res$LABEL <- as.factor(res$LABEL)
-
+  
 # convertimos a factor la etiqueta
-res$LABEL <- factor(res$LABEL) 
+res$LABEL <- factor(res$LABEL)
 
-# salvamos
-save(res, file = "modeldata.rda") 
-}
+# salvamos 
+save(res, file = "modeldata.rda")
+  
+} 
+
+
 ```
-## PROBANDO MODELOS PREDICTIVOS
 
-En todos los casos el procedimiento es el mismo:
-Si no se encuentra el fichero con las predicciones, se genera. Si existe, se carga en memoria.
-El código se encuentra en el archivo code/modelos.R
 
-### Ctree
 
-```{r}
-archivo.ctree <- file.path(directorio,"ctree.rda") 
+# PROBANDO MODELOS PREDICTIVOS
 
+*En todos los casos el procedimiento es el mismo*:
+
+*Si no se encuentra el fichero con las predicciones, se genera. Si existe, se carga en memoria.*
+
+** Este código se encuentra en el archivo code/modelos.R **
+
+## Ctree
+
+```{r eval = FALSE}
+
+
+archivo.ctree <- file.path(directorio,"ctree.rda")
+  
 if(file.exists(archivo.ctree)) {
-
-load(archivo.ctree) 
-
+  
+  load(archivo.ctree)
+  
 } else {
-
-arbol.juridico <- ctree(res$LABEL ~ ., data = res) 
-save(arbol.juridico, file = "ctree.rda")
-
+  
+  arbol.juridico <- ctree(res$LABEL ~ ., data = res)
+  
+  save(arbol.juridico, file = "ctree.rda")
 }
+
 pred.ctree <- predict(arbol.juridico, res, savePredictions = TRUE)
 
-```
-### Evolutionary tree
 
-```{r}
-archivo.evotree <- file.path(directorio,"evotree.rda") 
+```
+
+
+## Evolutionary tree 
+
+```{r eval = FALSE}
+
+
+archivo.evotree <- file.path(directorio,"evotree.rda")
 
 if(file.exists(archivo.evotree)) {
-
-load(archivo.evotree) 
-
+  load(archivo.evotree)
+       
 } else {
-
-fit <- evtree(LABEL ~ . , data=res)
-save(fit, file = "evotree.rda") 
+  
+  fit <- evtree(LABEL ~ . , data=res)
+  save(fit, file = "evotree.rda")
 }
 
 pred.evo <- predict(fit ,type ="response", savePredictions = TRUE)
+
 ```
 
-### Knn
+## Knn 
 
-```{r}
-archivo.knn <- file.path(directorio,"modeloknn.rda") 
+```{r eval = FALSE}
+
+archivo.knn <- file.path(directorio,"modeloknn.rda")
 
 if(file.exists(archivo.knn)) {
 
-load(archivo.knn)
-
+  load(archivo.knn)
+  
 } else {
-
+  
 entreno2 <- trainControl(method = "knn",
-			number = 10, savePredictions = TRUE)
-grid2 <- expand.grid(k = 1:10) 
-modeloknn <- train(LABEL ~ ., data = res)
+                 number = 10, savePredictions = TRUE)
+                  grid2 <- expand.grid(k = 1:10)
+  modeloknn <- train(LABEL ~ ., data = res)
+  save(modeloknn, file = "modeloknn.rda")
+}
 
-save(modeloknn, file = "modeloknn.rda") }
+
 pred.knn <- predict(modeloknn, res, savePredictions = TRUE)
-```
-### Jacknife
 
-```{r}
-archivo.jacknife <- file.path(directorio,"jacknife.rda") 
+```
+
+## Jacknife
+
+```{r eval = FALSE}
+
+archivo.jacknife <- file.path(directorio,"jacknife.rda")
 
 if(file.exists(archivo.jacknife)) {
-
-load(archivo.jacknife) 
-
+  
+  load(archivo.jacknife)
+  
 }else{
-
+  
 pred.jacknife <- knn.cv(res[,-1], res$LABEL, k = 1) 
 save(pred.jacknife, file = "jacknife.rda")
 }
-```
-### Random forest
 
-```{r}
-archivo.rf <- file.path(directorio,"randomforest.rda") 
+```
+
+## Random forest 
+
+```{r eval = FALSE}
+
+archivo.rf <- file.path(directorio,"randomforest.rda")
 
 if(file.exists(archivo.rf)) {
-
-load(archivo.rf) 
-
+  
+  load(archivo.rf)
+  
 } else {
-
-rf <- randomForest(LABEL ~ ., data = res, ntree = 500)
-save(rf, file = "randomforest.rda") 
+  
+  rf <- randomForest(LABEL ~ ., data = res, ntree = 500)
+  save(rf, file = "randomforest.rda")
 }
 
 pred.rf <- rf$predicted
+
 ```
 
-### Naive-Bayes
+## Naive-Bayes
 
-```{r}
-archivo.naive <- file.path(directorio,"naivebayes.rda") 
+```{r eval = FALSE}
+
+archivo.naive <- file.path(directorio,"naivebayes.rda")
 
 if(file.exists(archivo.naive)) {
-
-load(archivo.naive) 
-
+    
+    load(archivo.naive)
+  
 } else {
-
-model.nb <- naiveBayes(LABEL ~., data = res,res$LABEL) 
-save(model.nb, file = "naivebayes.rda")
+  
+  model.nb <- naiveBayes(LABEL ~., data = res,res$LABEL)
+  save(model.nb, file = "naivebayes.rda")
+  
 }
 
 pred.nb <- predict(model.nb,res[,-1])
+ 
 ```
 
-### Support Vector Machine
+## Support Vector Machine 
 
-```{r}
-archivo.svm <- file.path(directorio,"svm.rda") 
+```{r eval = FALSE}
+
+archivo.svm <- file.path(directorio,"svm.rda")
 
 if(file.exists(archivo.svm)) {
-
-load(archivo.svm) 
-
+  
+  load(archivo.svm)
+  
 } else {
-
-mod.svm <- svm(LABEL ~ ., data = res, kernel = "radial") 
+  
+mod.svm <- svm(LABEL ~ ., data = res, kernel = "radial")
 save(mod.svm, file = "svm.rda")
 }
 
 pred.svm <- mod.svm$fitted
+
 ```
 
-### Gradient Boosting Machine
+## Gradient Boosting Machine 
 
-```{r}
-archivo.gbm <- file.path(directorio,"gbm.rda") 
+```{r eval = FALSE}
+
+archivo.gbm <- file.path(directorio,"gbm.rda")
 
 if(file.exists(archivo.gbm)) {
-
-load(archivo.gbm) 
-
+  
+  load(archivo.gbm)
+  
 } else {
-
+  
 mod.gbm <- gbm(LABEL ~ ., data = res, interaction.depth = 6, n.trees= 10000, cv.folds = 3)
 save(mod.gbm, file = "gbm.rda")
 }
 
 perf <- gbm.perf(mod.gbm, method = "cv")
-
 # probabilidad arbitraria de falso mayor de 0.5
-table(res$LABEL, predict(mod.gbm, type = "response", n.trees = perf) > 0.5)
+table(res$LABEL, predict(mod.gbm, type = "response", n.trees = perf) > 0.5)  
+
 pred.numbers <- predict(mod.gbm, type = "response", n.trees = perf)
 
-# gbm no devuelve el LABEL de las predicciones para multinomial, 
+# gbm no devuelve el LABEL de las predicciones para multinomial,
 # por tanto escogemos la de mayor probabilidad
 pred_class <- apply(pred.numbers,1, which.max)
 
@@ -1091,7 +1134,7 @@ pred_class_etiquetas <- data.frame(id = 1:length(pred_class),pred_class)
 
 # hacer la sustitucion de numericos por label teniendo en cuenta que van alfabeticamente
 pred_class_etiquetas$pred_class[pred_class_etiquetas$pred_class == "1"] <- "APROBACION"
-pred_class_etiquetas$pred_class[pred_class_etiquetas$pred_class == "2"] <- "NOTIFICACIONES
+pred_class_etiquetas$pred_class[pred_class_etiquetas$pred_class == "2"] <- "NOTIFICACIONES"
 pred_class_etiquetas$pred_class[pred_class_etiquetas$pred_class == "3"] <- "ORDENAMIENTO"
 pred_class_etiquetas$pred_class[pred_class_etiquetas$pred_class == "4"] <- "OTROS"
 
@@ -1099,84 +1142,96 @@ pred.gbm <- pred_class_etiquetas$pred_class
 
 # GENERAMOS UN DATAFRAME NUEVO AÑADIENDO PREDICCIONES
 
-predicciones <- res
-predicciones <- cbind(predicciones, pred.ctree) 
-predicciones <- cbind(predicciones, pred.evo) 
-predicciones <- cbind(predicciones, pred.knn) 
-predicciones <- cbind(predicciones, pred.jacknife) 
-predicciones <- cbind(predicciones, pred.rf) 
-predicciones <- cbind(predicciones, pred.nb) 
-predicciones <- cbind(predicciones, pred.svm) 
-predicciones <- cbind(predicciones, pred.gbm)
+  predicciones <- res
+  
+  predicciones <- cbind(predicciones, pred.ctree)
+  predicciones <- cbind(predicciones, pred.evo)
+  predicciones <- cbind(predicciones, pred.knn)
+  predicciones <- cbind(predicciones, pred.jacknife)
+  predicciones <- cbind(predicciones, pred.rf)
+  predicciones <- cbind(predicciones, pred.nb)
+  predicciones <- cbind(predicciones, pred.svm)
+  predicciones <- cbind(predicciones, pred.gbm)
 
 # NOS QUEDAMOS SOLO CON LAS PREDICCIONES
-predicciones <- predicciones[,c("LABEL","pred.ctree","pred.evo","pred.knn",
-		"pred.jacknife" "pred.rf","pred.nb","pred.svm","pred.gbm")]
-		
-# DE ESTE MODO ES MUCHO MÁS SENCILLO GENERAR MATRICES DE CONFUSIÓN
-library(caret)
+  
+predicciones <- predicciones[,c("LABEL","pred.ctree","pred.evo","pred.knn","pred.jacknife",
+                                "pred.rf","pred.nb","pred.svm","pred.gbm")]  
+  
 
+# DE ESTE MODO ES MUCHO MÁS SENCILLO GENERAR MATRICES DE CONFUSIÓN
+
+library(caret)
+  
 confusion.ctree <- confusionMatrix(predicciones$pred.ctree, predicciones$LABEL)
-confusion.evo <- confusionMatrix(predicciones$pred.evo, predicciones$LABEL) 
-confusion.knn <- confusionMatrix(predicciones$pred.knn, predicciones$LABEL) 
-confusion.jack <- confusionMatrix(predicciones$pred.jacknife, predicciones$LABEL) 
-confusion.rf <- confusionMatrix(predicciones$pred.rf, predicciones$LABEL) 
-confusion.nb <- confusionMatrix(predicciones$pred.nb, predicciones$LABEL) 
-confusion.svm <- confusionMatrix(predicciones$pred.svm, predicciones$LABEL) 
+
+confusion.evo <- confusionMatrix(predicciones$pred.evo, predicciones$LABEL)
+confusion.knn <- confusionMatrix(predicciones$pred.knn, predicciones$LABEL)
+confusion.jack <- confusionMatrix(predicciones$pred.jacknife, predicciones$LABEL)
+confusion.rf <- confusionMatrix(predicciones$pred.rf, predicciones$LABEL)
+confusion.nb <- confusionMatrix(predicciones$pred.nb, predicciones$LABEL)
+confusion.svm <- confusionMatrix(predicciones$pred.svm, predicciones$LABEL)
 confusion.gbm <- confusionMatrix(predicciones$pred.gbm, predicciones$LABEL)
+
 
 # Y OBTENEMOS EL MEJOR MODELO MIRANDO EL ACCURACY
 
 confusion.ctree$overall[["Accuracy"]]
-	Accuracy
-	0.7185345
+      Accuracy      
+     0.7185345      
 confusion.evo$overall[["Accuracy"]]
-	Accuracy
-  	8.019397e-01
+      Accuracy      
+  8.019397e-01    
 confusion.knn$overall[["Accuracy"]]
-      	Accuracy
-	0.9890086
+      Accuracy      
+     0.9890086      
 confusion.jack$overll[["Accuracy"]]
-      	Accuracy
-	0.816163793
+      Accuracy      
+   0.816163793     
 confusion.rf$overall[["Accuracy"]]
-      	Accuracy
-	0.8849138
+      Accuracy      
+     0.8849138      
 confusion.nb$overall[["Accuracy"]]
-      	Accuracy
-  	6.478448e-01
+      Accuracy      
+  6.478448e-01    
 confusion.svm$overall[["Accuracy"]]
-      	Accuracy
-	0.9002155
+      Accuracy      
+     0.9002155      
 confusion.gbm$overall[["Accuracy"]]
-      	Accuracy
-	0.9556034
-	
-Queda claro que el orden de “acuracy” de los modelos, de mejor a peor es:
+      Accuracy      
+     0.9556034      
+```
+
+Queda claro que el orden de "acuracy" de los modelos, de mejor a peor es:
 
 1. knn (0.989)
 2. gbm (0.955)
 3. svm (0.900)
-4. RandomForest (0.884) 5. Jacknife (0.816)
+4. RandomForest (0.884)
+5. Jacknife (0.816)
 6. Evolutionary Tree (0.801)
-7. Conditional Inference Tree (0.718) 8. Naive-Bayes (0.647)
+7. Conditional Inference Tree (0.718)
+8. Naive-Bayes (0.647)
 
-```
 
-****
+***** 
+
 
 # CONCLUSIONES
 
-**Se ha logrado en gran medida el objetivo.**
-Los procesos de lectura y clasificación se han acelerado mucho, principalmente en la primera fase de extracción de contenidos.
-Tal y cómo hemos mencionado con anterioridad, se logran procesar más de 3.000 documentos a la semana cuando antes era habitual unos 150 en el mismo periodo de tiempo.
+## **Se ha logrado en gran medida el objetivo.**
 
-El número total de documentos procesados superó este mes los 26.000 dado que se ha solicitado incluso que se aplique esta metodología a antiguos proyectos.
+Los procesos de lectura y clasificación se han acelerado mucho, principalmente en la primera fase de extracción de contenidos. 
 
-Los procesos de clasificación, por las noticias que tenemos, se han acelerado igualmente, aunque queda por evaluar la precisión del sistema predictivo, sustituir el árbol de decisión inicial por el modelo basado en knn y articular mecanismos de verficación en caso de ser necesario a partir de las indicaciones de cada uno de los departamentos.
+Tal y cómo hemos mencionado con anterioridad, se logran procesar más de 3.000 documentos a la semana cuando antes era habitual unos 150 en el mismo periodo de tiempo. 
+
+El número total de documentos procesados superó este mes los 26.000 dado que se ha solicitado incluso que se aplique esta metodología a antiguos proyectos
+
+Los procesos de clasificación, por las noticias que tenemos, se han acelerado igualmente, aunque queda por evaluar la precisión del sistema predictivo, sustituir el árbol de decisión inicial por el modelo basado en knn y articular mecanismos de verificación en caso de ser necesario a partir de las indicaciones de cada uno de los departamentos.
 
 
-										Jose Manuel Vera Oteo, en Madrid, a 12 de Junio de 2016
+
+                                                      Jose Manuel Vera Oteo, en Madrid, a 9 de Junio de 2016
 
 
 
