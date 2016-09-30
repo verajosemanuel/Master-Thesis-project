@@ -6,7 +6,7 @@ http://kschool.com/blog/data-science/jose-manuel-vera-data-scientist/
 
 ## Project goal:
 
-Design and deploy an automatic or semi-supervised platform for document classification (mainly pdf) including text extraction using R & Python.
+Design and deploy an automatic or semi-supervised platform for document classification (mainly pdf) including text extraction using Bash, R & Python.
 
 ## Running / Installing
 
