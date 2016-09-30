@@ -1,14 +1,14 @@
 # Master Thesis Project
 
-Thesis project for the end of Master course in Data Science attended during 2015-16.
+Thesis project for the end of Master's degree in Data Science attended during 2015-16.
 
 ## Project goal:
 
-Design and deploy an automatic or semi-supervised platform for document classification (mainly pdf) and text extraction.
+Design and deploy an automatic or semi-supervised platform for document classification (mainly pdf) including text extraction.
 
 ## Running / Installing
 
-Running this code requires a Linux machine for bash scripts, and iPython Notebook & Rstudio for the rest of the code files.
+Running this code requires a Linux machine for bash scripts, and iPython Notebook & Rstudio for the rest of the files.
 
 For getting the scope of this work and the methods implemented there's no need of executing code. Just download/clone the repository and read the presentation files:
 
