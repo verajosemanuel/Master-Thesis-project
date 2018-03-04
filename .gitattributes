@@ -4,3 +4,5 @@
 # ============
 *.css linguist-language=r
 *.html linguist-language=r
+*.pdf linguist-language=r
+*.sh linguist-language=r
