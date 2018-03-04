@@ -1,0 +1,6 @@
+# Basic .gitattributes for a R repo.
+
+# Source files
+# ============
+*.css linguist-language=r
+*.html linguist-language=r
